@@ -17,11 +17,13 @@
                     <tr>
                         <td>Id</td>
                         <td>Texto</td>
+                        <td>Url</td>
                     </tr>
-                    {% for d in data %}
+                    {% for d in enlaces %}
                     <tr>
                         <td>{{d.id}}</td>
                         <td>{{d.texto}}</td>
+                        <td><a href="">{{d.url}}</a></td>
                     </tr>
                     {% endfor %}
                 </table>
