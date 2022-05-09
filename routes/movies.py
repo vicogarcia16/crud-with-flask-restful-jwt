@@ -25,6 +25,10 @@ class MoviesApi(Resource):
         return {'id': len(movies)-1}, 200
 
 class MovieApi(Resource):
+    def get(self, id):
+        movie = movies[id]
+        return make_response(jsonify(movie),200)
+        
     def put(self,id):
         movie = request.get_json()
         movies[id] = movie
