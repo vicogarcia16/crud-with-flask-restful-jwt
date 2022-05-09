@@ -11,9 +11,9 @@ def get_user(name):
         {'id':3, 'texto': 'dato3'}
     ]
 
-    enlaces=[{"url":"http://www.google.es","texto":"Google"},
-			{"url":"http://www.twitter.com","texto":"Twitter"},
-			{"url":"http://www.facbook.com","texto":"Facebook"},
+    enlaces=[{"id":1,"url":"http://www.google.com","texto":"Google"},
+			{"id":2,"url":"http://www.twitter.com","texto":"Twitter"},
+			{"id":3,"url":"http://www.facebook.com","texto":"Facebook"},
 			]
 
     return render_template('index.html', name=name, data=data, enlaces=enlaces)
