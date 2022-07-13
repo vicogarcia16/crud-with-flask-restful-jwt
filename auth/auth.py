@@ -16,16 +16,23 @@ class Login(Resource):
     
         if username != os.environ.get("USER") or password != os.environ.get("PASS"):
             return jsonify({"msg": "Bad username or password"}), 401
-
-        access_token = create_access_token(identity=username,fresh=True)
-        refresh_token = create_refresh_token(identity=username)
+        data = {
+            "usuario": "usuario",
+            "contraseña": "contraseña",
+            "nomina":5050
+        }
+        access_token = create_access_token(identity=data,fresh=True)
+        refresh_token = create_refresh_token(identity=data)
+        
         return make_response(jsonify(access_token=access_token,refresh_token=refresh_token))
 
 
 class Refresh(Resource):
     @jwt_required(refresh=True)
     def post(self):
+
         identity = get_jwt_identity()
+    
         access_token = create_access_token(identity=identity, fresh=False)
         return jsonify(access_token=access_token)
 
