@@ -1,9 +1,16 @@
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, render_template
 from routes.movies import MoviesApi, MovieApi 
 from auth.auth import Login, Refresh
+from flask_jwt_extended import jwt_required
+from flask_apispec import doc
+
 user = Blueprint('user', __name__)
 
-@user.route('/user/<name>')
+
+@user.route('/user/<name>', methods=['GET'], provide_automatic_options=False)
+@doc(description="Obtener información del usuario", tags=["User"], 
+     security = [{"ApiKeyAuth": []}], methods = ['GET'])
+@jwt_required()
 def get_user(name):
     data= [
         {'id':1, 'texto': 'dato'},
@@ -18,9 +25,11 @@ def get_user(name):
 
     return render_template('index.html', name=name, data=data, enlaces=enlaces)
 
-
 def initialize_routes(api):
     api.add_resource(MoviesApi, '/movies')
     api.add_resource(MovieApi, '/movies/<int:id>')
     api.add_resource(Login, '/login')
     api.add_resource(Refresh, '/refresh')
+
+
+    

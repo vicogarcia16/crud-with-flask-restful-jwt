@@ -1,40 +1,33 @@
-
-from flask import jsonify, make_response
-from flask import request
-from flask_restful import Resource
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import create_refresh_token
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from schemas.auth import LoginResponseSchema, LoginRequestSchema, RefreshResponseSchema
+from flask import jsonify
+from flask_jwt_extended import (create_access_token, create_refresh_token,
+                                jwt_required, get_jwt_identity)
 import os
+from flask_apispec.views import MethodResource
+from flask_apispec import use_kwargs, marshal_with, doc
 
-
-
-class Login(Resource):
-    def post(self):
-        username = request.json.get("username", None)
-        password = request.json.get("password", None)
-    
+class Login(MethodResource):
+    @doc(description="Autenticación de usuario", tags=["Auth"], 
+         security=[])
+    @use_kwargs(LoginRequestSchema, location="json")
+    @marshal_with(LoginResponseSchema)
+    def post(self, username, password):
         if username != os.environ.get("USER") or password != os.environ.get("PASS"):
             return jsonify({"msg": "Bad username or password"}), 401
-        data = {
-            "usuario": "usuario",
-            "contraseña": "contraseña",
-            "nomina":5050
-        }
-        access_token = create_access_token(identity=data,fresh=True)
+        data =  username
+        access_token = create_access_token(identity=data, fresh=True)
         refresh_token = create_refresh_token(identity=data)
-        
-        return make_response(jsonify(access_token=access_token,refresh_token=refresh_token))
+        return {"access_token": access_token, "refresh_token": refresh_token}, 200
 
-
-class Refresh(Resource):
+class Refresh(MethodResource):
+    @doc(description="Refrescar el token de acceso", tags=["Auth"], 
+         security=[{"ApiKeyAuth": []}])
+    @marshal_with(RefreshResponseSchema)
     @jwt_required(refresh=True)
     def post(self):
-
         identity = get_jwt_identity()
-    
         access_token = create_access_token(identity=identity, fresh=False)
-        return jsonify(access_token=access_token)
+        return {"access_token": access_token}, 200
 
 
     

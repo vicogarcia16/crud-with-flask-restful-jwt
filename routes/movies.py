@@ -1,6 +1,7 @@
-from flask import jsonify, request, Response, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_restful import Resource
+from flask_apispec.views import MethodResource
+from flask_apispec import use_kwargs, marshal_with, doc
+from schemas.movies import MovieSchema
 
 movies = [
     {
@@ -9,33 +10,52 @@ movies = [
         "genres": ["Drama"]
     },
     {
-       "name": "The Godfather ",
-       "casts": ["Marlon Brando", "Al Pacino", "James Caan", "Diane Keaton"],
-       "genres": ["Crime", "Drama"]
+        "name": "The Godfather ",
+        "casts": ["Marlon Brando", "Al Pacino", "James Caan", "Diane Keaton"],
+        "genres": ["Crime", "Drama"]
     }
 ]
 
-class MoviesApi(Resource):
+class MoviesApi(MethodResource):
+    @doc(description="Obtener todas las películas", tags=["Movies"], security = [])
+    @marshal_with(MovieSchema(many=True))  # Serializa una lista de películas
     def get(self):
-        return jsonify(movies)
+        return movies
 
-    def post(self):
-        movie = request.get_json()
+    @doc(description="Agregar una nueva película", tags=["Movies"], security = [])
+    @use_kwargs(MovieSchema, location="json")  # Extrae los datos del cuerpo JSON
+    @marshal_with(None)  # Sin respuesta estructurada
+    def post(self, **kwargs):
+        movie = kwargs  # kwargs contendrá el JSON validado
         movies.append(movie)
-        return {'id': len(movies)-1}, 200
+        return {'id': len(movies) - 1}, 201
 
-class MovieApi(Resource):
+class MovieApi(MethodResource):
+    @doc(description="Obtener una película por ID", id="id", tags=["Movies"], security = [])
+    @marshal_with(MovieSchema)  # Serializa una película individual
     def get(self, id):
-        movie = movies[id]
-        return make_response(jsonify(movie),200)
-        
-    def put(self,id):
-        movie = request.get_json()
-        movies[id] = movie
-        return make_response(jsonify(movies[id]),200)
-    
+        if id < 0 or id >= len(movies):
+            return {"error": "Película no encontrada"}, 404
+        return movies[id]
+
+    @doc(description="Actualizar una película por ID", tags=["Movies"], security = [])
+    @use_kwargs(MovieSchema, location="json")
+    @marshal_with(MovieSchema)  # Serializa la película actualizada
+    def put(self, id, **kwargs):
+        if id < 0 or id >= len(movies):
+            return {"error": "Película no encontrada"}, 404
+        movies[id] = kwargs
+        return movies[id]
+
+    @doc(
+        description="Eliminar una película por ID",
+        tags=["Movies"],
+        security=[{"ApiKeyAuth": []}]  # Aplica el esquema de seguridad JWT
+    )
     @jwt_required()
     def delete(self, id):
+        if id < 0 or id >= len(movies):
+            return {"error": "Película no encontrada"}, 404
         current_user = get_jwt_identity()
         movies.pop(id)
-        return make_response(jsonify({'status':'Eliminado'}, {'Eliminado por':current_user}), 200)
+        return {'status': 'Eliminado', 'Eliminado por': current_user}, 200
